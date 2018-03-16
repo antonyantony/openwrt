@@ -241,7 +241,12 @@ else
 	$(CP) $(PKG_BUILD_DIR)/$(UBOOT_IMAGE) $(STAGING_DIR_IMAGE)/$(BUILD_DEVICES)-u-boot-with-spl.bin
 endif
 	mkimage -C none -A arm -T script -d uEnv-$(UENV).txt \
-		$(STAGING_DIR_IMAGE)/$(BUILD_DEVICES)-boot.scr
+		$(STAGING_DIR_IMAGE)/$(BUILD_DEVICES)-boot-usd-p1.scr
+	$(CP) $(STAGING_DIR_IMAGE)/$(BUILD_DEVICES)-boot-usd-p1.scr $(STAGING_DIR_IMAGE)/boot.scr
+	$(CP) $(STAGING_DIR_IMAGE)/$(BUILD_DEVICES)-boot-usd-p1.scr $(STAGING_DIR_IMAGE)/$(BUILD_DEVICES)-boot.scr
+	sed -e s/mmcblk0p1/mmcblk2p1/ uEnv-$(UENV).txt > $(STAGING_DIR_IMAGE)/uEnv-$(UENV)-emmc-p1.txt
+	mkimage -C none -A arm -T script -d $(STAGING_DIR_IMAGE)/uEnv-$(UENV)-emmc-p1.txt \
+		$(STAGING_DIR_IMAGE)/$(BUILD_DEVICES)-boot-emmc-p1.scr
 endef
 
 define Package/u-boot/install/default

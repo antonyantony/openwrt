@@ -250,7 +250,20 @@ endef
 
 E2SIZE=$(shell echo $$(($(CONFIG_TARGET_ROOTFS_PARTSIZE)*1024*1024)))
 
+ifdef CONFIG_TARGET_SUNXI_BOOTFS_EXT4_ONLY
+  define Image/mkfs/sunxi-add-boot-dir
+	mkdir -p $(call mkfs_target_dir,$(1))/boot
+	$(CP) $(KERNEL_BUILD_DIR)/Image \
+		$(call mkfs_target_dir,$(1))/boot/uImage
+	$(CP) $(STAGING_DIR_IMAGE)/* $(call mkfs_target_dir,$(1))/boot/
+	rm -fr $(call mkfs_target_dir,$(1)add-sunxi-uImage)/boot/b*.bin
+	$(CP) $(DTS_DIR)/allwinner/sun50i-h5-nanopi-neo-plus2.dtb \
+		$(call mkfs_target_dir,$(1))/boot/dtb
+  endef
+endif
+
 define Image/mkfs/ext4
+	$(Image/mkfs/sunxi-add-boot-dir)
 	$(STAGING_DIR_HOST)/bin/make_ext4fs \
 		-l $(E2SIZE) -b $(CONFIG_TARGET_EXT4_BLOCKSIZE) \
 		$(if $(CONFIG_TARGET_EXT4_RESERVED_PCT),-m $(CONFIG_TARGET_EXT4_RESERVED_PCT)) \
@@ -266,6 +279,7 @@ endef
 
 ifdef CONFIG_TARGET_ROOTFS_TARGZ
   define Image/Build/targz
+	$(Image/mkfs/sunxi-add-boot-dir)
 	$(TAR) -cp --numeric-owner --owner=0 --group=0 --sort=name \
 		$(if $(SOURCE_DATE_EPOCH),--mtime="@$(SOURCE_DATE_EPOCH)") \
 		-C $(TARGET_DIR)/ . | gzip -9n > $(BIN_DIR)/$(IMG_PREFIX)$(if $(PROFILE_SANITIZED),-$(PROFILE_SANITIZED))-rootfs.tar.gz
